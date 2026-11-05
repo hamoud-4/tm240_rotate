@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graphics2D.rotate()</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3faf5;
+      --surface: #ffffff;
+      --surface-2: #eaf6ee;
+      --border: #d3e7da;
+      --text: #10241a;
+      --muted: #5d7a69;
+      --accent: #16a34a;
+      --accent-dark: #128a3e;
+      --accent-soft: rgba(22, 163, 74, 0.14);
+      --pivot: #ef4444;
+      --radius: 16px;
+      --shadow: 0 1px 2px rgba(16, 36, 26, 0.04), 0 8px 24px rgba(22, 163, 74, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background:
+        radial-gradient(900px 400px at 10% -10%, rgba(22, 163, 74, 0.10), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .app { max-width: 960px; margin: 0 auto; display: grid; gap: 20px; }
+
+    /* Header */
+    header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+    h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; }
+    header p { color: var(--muted); font-size: 0.9rem; margin-top: 6px; max-width: 520px; line-height: 1.5; }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 0.85em;
+    }
+
+    /* Layout */
+    .layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    @media (min-width: 860px) { .layout { grid-template-columns: 320px 1fr; } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Controls */
+    .controls { display: grid; gap: 22px; align-content: start; }
+    .field label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; }
+    .field output { font-family: 'JetBrains Mono', monospace; color: var(--accent-dark); }
+
+    .shapes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    button {
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    button:hover { color: var(--accent-dark); border-color: var(--accent); background: var(--accent-soft); }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    button.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 20px;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      --fill: 50%;
+      --track-light: #cfeedb;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(to right,
+        var(--accent) 0%, var(--accent) var(--fill),
+        var(--track-light) var(--fill), var(--track-light) 100%);
+    }
+    input[type=range]::-moz-range-track {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--track-light);
+    }
+    input[type=range]::-moz-range-progress {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      margin-top: -6px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.35);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.35);
+    }
+    input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--accent-soft); }
+    input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px var(--accent-soft); }
+
+
+    .stage { display: grid; gap: 14px; }
+    canvas {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      display: block;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .credit {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      padding: 8px 0 4px;
+    }
+    .credit strong { color: var(--accent-dark); font-weight: 700; }
+
+    .status { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 0.85rem; color: var(--muted); }
+    .status strong { color: var(--text); font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <header>
+      <div>
+        <h1>Graphics2D.rotate()</h1>
+        <p>
+          <code>g2.rotate(theta, x, y)</code> turns the canvas around a pivot point.
+          Positive angles go clockwise, negative go counter clockwise.
+        </p>
+      </div>
+      <button id="reset">Reset</button>
+    </header>
+
+    <div class="layout">
+
+      <section class="card controls">
+        <div class="field">
+          <label>Shape</label>
+          <div class="shapes">
+            <button data-shape="rectangle" class="active">Rectangle</button>
+            <button data-shape="triangle">Triangle</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="angle">Angle <output id="angleOut"></output></label>
+          <input type="range" id="angle" min="-360" max="360">
+        </div>
+
+        <div class="field">
+          <label for="pivotX">Pivot X <output id="pivotXOut"></output></label>
+          <input type="range" id="pivotX" min="0" max="480">
+        </div>
+
+        <div class="field">
+          <label for="pivotY">Pivot Y <output id="pivotYOut"></output></label>
+          <input type="range" id="pivotY" min="0" max="360">
+        </div>
+      </section>
+
+      <section class="card stage">
+        <canvas id="canvas"></canvas>
+        <div class="status">
+          <span>Radians: <strong id="radians"></strong></span>
+          <span id="direction"></span>
+        </div>
+      </section>
+
+    </div>
+
+    <footer class="credit">Developed by <strong>Hamoud</strong></footer>
+  </div>
+
+  <script>
+    const WIDTH = 480;
+    const HEIGHT = 360;
+    const DEFAULTS = { shape: 'rectangle', angle: 45, pivotX: 240, pivotY: 180 };
+    const COLORS = {
+      grid: '#cfeedb',                      
+      original: '#7fb995',                  
+      fill: 'rgba(22, 163, 74, 0.18)',     
+      stroke: '#16a34a',                    
+      pivot: '#ef4444',                     
+      pivotHalo: 'rgba(239, 68, 68, 0.25)'
+    };
+
+    const state = { ...DEFAULTS };
+    const $ = (id) => document.getElementById(id);
+    const canvas = $('canvas');
+    const ctx = canvas.getContext('2d');
+    const shapeButtons = document.querySelectorAll('[data-shape]');
+
+    const inputs = {
+      angle: $('angle'),
+      pivotX: $('pivotX'),
+      pivotY: $('pivotY')
+    };
+
+    const outputs = {
+      angle: $('angleOut'),
+      pivotX: $('pivotXOut'),
+      pivotY: $('pivotYOut'),
+      radians: $('radians'),
+      direction: $('direction')
+    };
+
+    function shapePath(type) {
+      ctx.beginPath();
+      if (type === 'rectangle') {
+        ctx.rect(170, 135, 140, 90);
+      } else {
+        ctx.moveTo(240, 120);
+        ctx.lineTo(175, 225);
+        ctx.lineTo(305, 225);
+        ctx.closePath();
+      }
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = COLORS.grid;
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      for (let x = 0; x <= WIDTH; x += 40) { ctx.moveTo(x, 0); ctx.lineTo(x, HEIGHT); }
+      for (let y = 0; y <= HEIGHT; y += 40) { ctx.moveTo(0, y); ctx.lineTo(WIDTH, y); }
+      ctx.stroke();
+    }
+
+    function drawOriginal() {
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = COLORS.original;
+      shapePath(state.shape);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawRotated() {
+      const { pivotX, pivotY, angle } = state;
+      ctx.save();
+      ctx.translate(pivotX, pivotY);
+      ctx.rotate(angle * Math.PI / 180);
+      ctx.translate(-pivotX, -pivotY);
+      shapePath(state.shape);
+      ctx.fillStyle = COLORS.fill;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = COLORS.stroke;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPivot() {
+      const { pivotX, pivotY } = state;
+      ctx.beginPath();
+      ctx.arc(pivotX, pivotY, 10, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.pivotHalo;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(pivotX, pivotY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.pivot;
+      ctx.fill();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      drawGrid();
+      drawOriginal();
+      drawRotated();
+      drawPivot();
+    }
+
+    function render() {
+      const { shape, angle, pivotX, pivotY } = state;
+
+      inputs.angle.value = angle;
+      inputs.pivotX.value = pivotX;
+      inputs.pivotY.value = pivotY;
+
+      Object.values(inputs).forEach((input) => {
+        const pct = (input.value - input.min) / (input.max - input.min) * 100;
+        input.style.setProperty('--fill', pct + '%');
+      });
+
+      outputs.angle.textContent = `${angle}°`;
+      outputs.pivotX.textContent = pivotX;
+      outputs.pivotY.textContent = pivotY;
+      outputs.radians.textContent = (angle * Math.PI / 180).toFixed(4);
+      outputs.direction.textContent =
+        angle > 0 ? 'Clockwise' : angle < 0 ? 'Counter clockwise' : 'No rotation';
+
+      shapeButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.shape === shape));
+
+      draw();
+    }
+
+    function resizeCanvas() {
+      const { width, height } = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(canvas.width / WIDTH, 0, 0, canvas.height / HEIGHT, 0, 0);
+      draw();
+    }
+
+    //Events 
+    shapeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.shape = btn.dataset.shape;
+        render();
+      });
+    });
+
+    Object.entries(inputs).forEach(([key, input]) => {
+      input.addEventListener('input', () => {
+        state[key] = Number(input.value);
+        render();
+      });
+    });
+
+    $('reset').addEventListener('click', () => {
+      Object.assign(state, DEFAULTS);
+      render();
+    });
+
+    function movePivot(e) {
+      const rect = canvas.getBoundingClientRect();
+      state.pivotX = Math.round(Math.min(Math.max((e.clientX - rect.left) / rect.width * WIDTH, 0), WIDTH));
+      state.pivotY = Math.round(Math.min(Math.max((e.clientY - rect.top) / rect.height * HEIGHT, 0), HEIGHT));
+      render();
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      movePivot(e);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (canvas.hasPointerCapture(e.pointerId)) movePivot(e);
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    render();
+  </script>
+</body>
+</html>
